@@ -165,6 +165,14 @@ app_bridged_device_address_t app_bridge_espnow_address(uint8_t espnow_macaddr[6]
     return bridged_address;
 }
 
+app_bridged_device_address_t app_bridge_knx_address(uint16_t knx_addr)
+{
+    app_bridged_device_address_t bridged_address = {
+        .knx_addr = knx_addr,
+    };
+    return bridged_address;
+}
+
 /** Bridged Device APIs */
 app_bridged_device_t *app_bridge_create_bridged_device(node_t *node, uint16_t parent_endpoint_id,
                                                        uint32_t matter_device_type_id,
@@ -403,5 +411,64 @@ uint8_t *app_bridge_get_espnow_macaddr_by_matter_endpointid(uint16_t matter_endp
         current_dev = current_dev->next;
     }
     return NULL;
+}
+
+/** KNX Device APIs */
+app_bridged_device_t *app_bridge_get_device_by_knx_addr(uint16_t knx_addr)
+{
+    app_bridged_device_t *current_dev = g_bridged_device_list;
+    while (current_dev) {
+        if ((current_dev->dev_type == ESP_MATTER_BRIDGED_DEVICE_TYPE_KNX) && current_dev->dev &&
+            (current_dev->dev_addr.knx_addr == knx_addr)) {
+            return current_dev;
+        }
+        current_dev = current_dev->next;
+    }
+    return NULL;
+}
+
+uint16_t app_bridge_get_matter_endpointid_by_knx_addr(uint16_t knx_addr)
+{
+    app_bridged_device_t *current_dev = g_bridged_device_list;
+    while (current_dev) {
+        if ((current_dev->dev_type == ESP_MATTER_BRIDGED_DEVICE_TYPE_KNX) && current_dev->dev &&
+            (current_dev->dev_addr.knx_addr == knx_addr)) {
+            return esp_matter::endpoint::get_id(current_dev->dev->endpoint);
+        }
+        current_dev = current_dev->next;
+    }
+    return 0xFFFF;
+}
+
+uint16_t app_bridge_get_knx_addr_by_matter_endpointid(uint16_t matter_endpointid)
+{
+    app_bridged_device_t *current_dev = g_bridged_device_list;
+    while (current_dev) {
+        if ((current_dev->dev_type == ESP_MATTER_BRIDGED_DEVICE_TYPE_KNX) && current_dev->dev &&
+            (esp_matter::endpoint::get_id(current_dev->dev->endpoint) == matter_endpointid)) {
+            return current_dev->dev_addr.knx_addr;
+        }
+        current_dev = current_dev->next;
+    }
+    return 0xFFFF;
+}
+
+void app_bridge_list_bridged_device_list(void)
+{
+    uint8_t counter = 0;
+    app_bridged_device_t *current_dev = g_bridged_device_list;
+    ESP_LOGI(TAG, "bridged device count=%u", g_current_bridged_device_count);
+    while (current_dev) {
+        if ((current_dev->dev_type == ESP_MATTER_BRIDGED_DEVICE_TYPE_KNX) && current_dev->dev) 
+        {
+            ESP_LOGI(TAG, "KNX Device->%u", counter);   
+        }
+        else
+        {
+            ESP_LOGI(TAG, "Another device->%u", counter);
+        }
+        current_dev = current_dev->next;
+        counter++;
+    }
 }
 #endif
