@@ -288,6 +288,10 @@ esp_err_t app_bridge_remove_device(app_bridged_device_t *bridged_device)
     if (error != ESP_OK) {
         ESP_LOGE(TAG, "Failed to delete bridged device");
     }
+    
+    if(g_current_bridged_device_count > 0)
+        g_current_bridged_device_count--;
+    
     esp_matter_mem_free(bridged_device);
 
     return error;
